@@ -1,7 +1,7 @@
 const socketIo = require('socket.io');
 const { socketAuthMiddleware } = require('../middleware/auth');
 const messageService = require('../services/messageService');
-const User = require('../models/User');
+const User = require('../model/userModel');
 
 const initializeSocket = (server) => {
   const io = socketIo(server, {

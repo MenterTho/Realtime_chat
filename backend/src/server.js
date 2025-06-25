@@ -1,17 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const connectDB = require('./config/db');
 const morgan = require("morgan")
-const { initializeSocket } = require('./config/socket');
+// const { initializeSocket } = require('./config/socket');
 const  appRoutes = require('./routes/serverRoutes')
 const errorMiddleware = require('./middleware/errorMiddleware');
-require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
 
 // Khởi tạo Socket.IO
-initializeSocket(server);
+// initializeSocket(server);
 
 // Kết nối MongoDB
 connectDB();
