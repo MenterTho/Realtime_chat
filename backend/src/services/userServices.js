@@ -14,6 +14,8 @@ const updateProfile = async (userId, updates, file) => {
   const updateKeys = Object.keys(updates);
   const isValid = updateKeys.every((key) => allowedUpdates.includes(key));
   if (!isValid) throw new Error('Invalid updates');
+  if (!file && updateKeys.length === 0) throw new Error('No updates provided');
+
   const user = await User.findById(userId);
   if (!user) throw new Error('User not found');
 
@@ -26,16 +28,30 @@ const updateProfile = async (userId, updates, file) => {
   }
   if (file) {
     try {
-      // Kiểm tra ảnh cũ, chỉ xóa nếu là URL Cloudinary
+      // Kiểm tra định dạng file
+      const allowedMimes = ['image/jpeg', 'image/png'];
+      if (!file.mimetype || !allowedMimes.includes(file.mimetype)) {
+        throw new Error('Invalid file format. Only JPEG/PNG allowed');
+      }
+      // Kiểm tra file buffer
+      if (!file.buffer) throw new Error('Invalid file provided: Missing buffer');
+      // Xóa ảnh cũ nếu là URL Cloudinary
       if (user.avatar && user.avatar.includes('res.cloudinary.com')) {
         const publicId = user.avatar.split('/').pop().split('.')[0];
         await cloudinary.uploader.destroy(`chat_avatars/${publicId}`, { invalidate: true }).catch((err) => {
           console.error('Error deleting old avatar:', err.message);
         });
       }
-      const result = await cloudinary.uploader.upload(file.path, {
-        resource_type: 'image',
-        folder: 'chat_avatars',
+      // Upload file từ buffer
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { resource_type: 'image', folder: 'chat_avatars' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(file.buffer);
       });
       user.avatar = result.secure_url;
     } catch (error) {
