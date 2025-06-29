@@ -4,9 +4,8 @@ import axios from './lib/axios';
 import { useAuth } from './hooks/userAuth';
 import Navbar from './components/ui-navbar/navbar';
 import Login from './pages/signin';
-// import Register from './pages/register';
+import Register from './pages/register';
 // import Chat from './pages/chat';
-// import Profile from './pages/profile';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -16,16 +15,21 @@ function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('Checking auth at:', `${import.meta.env.VITE_API_URL}/user/profile`);
         const res = await axios.get('/user/profile');
         const { userId, username, avatar } = res.data.data;
         login(localStorage.getItem('accessToken'), userId, username, avatar);
       } catch (err) {
-        console.error('Check auth failed:', err.response?.data?.error);
+        console.error('Check auth failed:', err.response?.data?.message || err.message);
       } finally {
         setIsCheckingAuth(false);
       }
     };
-    checkAuth();
+    if (localStorage.getItem('accessToken')) {
+      checkAuth();
+    } else {
+      setIsCheckingAuth(false);
+    }
   }, [login]);
 
   if (isCheckingAuth) {
@@ -43,8 +47,7 @@ function App() {
         <Routes>
           <Route path="/" element={auth.userId ? <Chat /> : <Navigate to="/login" />} />
           <Route path="/login" element={auth.userId ? <Navigate to="/" /> : <Login />} />
-          {/* <Route path="/register" element={auth.userId ? <Navigate to="/" /> : <Register />} /> */}
-          <Route path="/profile" element={auth.userId ? <Profile /> : <Navigate to="/login" />} />
+          <Route path="/register" element={auth.userId ? <Navigate to="/" /> : <Register />} />
         </Routes>
         <Toaster />
       </div>

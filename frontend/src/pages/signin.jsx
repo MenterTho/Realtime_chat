@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../lib/axios';
@@ -17,13 +16,15 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      console.log('Sending login request to:', `${import.meta.env.VITE_API_URL}/auth/login`);
       const res = await axios.post('/auth/login', { username, password });
       const { accessToken, userId, username: resUsername, avatar } = res.data.data;
       login(accessToken, userId, resUsername, avatar);
       toast.success('Đăng nhập thành công!');
       navigate('/');
     } catch (err) {
-      const errorMsg = err.response?.data?.error || 'Đăng nhập thất bại';
+      const errorMsg = err.response?.data?.message || 'Đăng nhập thất bại. Kiểm tra backend CORS!';
+      console.error('Login error:', err.message, err.response?.data);
       setError(errorMsg);
       toast.error(errorMsg);
     }
