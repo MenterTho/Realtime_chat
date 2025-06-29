@@ -1,11 +1,11 @@
 const socketIo = require('socket.io');
-const { socketAuthMiddleware } = require('../middleware/auth');
-const messageService = require('../services/messageService');
+const { socketAuthMiddleware } = require('../middleware/authMiddleware');
+const messageService = require('../services/messageServices');
 const User = require('../model/userModel');
 
 const initializeSocket = (server) => {
   const io = socketIo(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] },
+    cors: { origin: 'http://localhost:5173', methods: ['GET', 'POST'] },
   });
 
   io.use(socketAuthMiddleware);
