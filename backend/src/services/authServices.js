@@ -42,7 +42,7 @@ const login = async (username, password) => {
     { upsert: true }
   );
 
-  return { accessToken, refreshToken };
+  return { message: 'User login', accessToken, refreshToken, userId: user._id};
 };
 
 const refreshToken = async (refreshToken) => {

@@ -2,12 +2,14 @@ const Message = require('../model/messageModel');
 const User = require('../model/userModel');
 const cloudinary = require('../config/cloudinary');
 
-const sendMessage = async (senderId, receiverId, content, file) => {
+const sendMessage = async (senderId, receiverId, content, file, fileUrl, fileName) => {
   const receiver = await User.findById(receiverId);
   if (!receiver) throw new Error('Receiver not found');
-  if (!content && !file) throw new Error('Content or file is required');
+  if (!content && !file && !fileUrl) throw new Error('Content or file is required');
 
-  let fileUrl = null, fileName = null;
+  let finalFileUrl = fileUrl || null;
+  let finalFileName = fileName || null;
+
   if (file) {
     const allowedMimes = ['image/jpeg', 'image/png', 'video/mp4', 'application/pdf'];
     if (!file.mimetype || !allowedMimes.includes(file.mimetype)) {
@@ -24,15 +26,15 @@ const sendMessage = async (senderId, receiverId, content, file) => {
         );
         uploadStream.end(file.buffer);
       });
-      fileUrl = result.secure_url;
-      fileName = file.originalname;
+      finalFileUrl = result.secure_url;
+      finalFileName = file.originalname;
     } catch (error) {
       console.error('Error uploading file:', error.message);
       throw new Error(`Failed to upload file: ${error.message}`);
     }
   }
 
-  const message = new Message({ sender: senderId, receiver: receiverId, content, fileUrl, fileName });
+  const message = new Message({ sender: senderId, receiver: receiverId, content, fileUrl: finalFileUrl, fileName: finalFileName });
   await message.save();
   return await Message.findById(message._id).populate('sender receiver', 'username avatar');
 };

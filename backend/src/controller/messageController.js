@@ -1,4 +1,5 @@
 const messageService = require('../services/messageServices');
+const User = require('../model/userModel');
 
 const getMessages = async (req, res, next) => {
   try {
@@ -17,10 +18,23 @@ const sendMessage = async (req, res, next) => {
       return res.status(400).json({ message: 'Thất bại', error: 'Receiver ID and content or file are required' });
     }
     const message = await messageService.sendMessage(req.user.id, receiverId, content, file);
-    // Phát tin nhắn qua Socket.IO
     const io = req.app.get('socketio');
-    io.to(receiverId).emit('message', message);
-    io.to(req.user.id).emit('message', message);
+    if (io) {
+      try {
+        const receiver = await User.findById(receiverId);
+        if (receiver && receiver.socketId) {
+          io.to(receiver.socketId).emit('message', message);
+        }
+        const sender = await User.findById(req.user.id);
+        if (sender && sender.socketId) {
+          io.to(sender.socketId).emit('message', message);
+        }
+      } catch (socketError) {
+        console.error('Socket.IO emit error:', socketError.message);
+      }
+    } else {
+      console.error('Socket.IO instance not found');
+    }
     res.json({ message: 'Gửi tin nhắn thành công', data: message });
   } catch (error) {
     next(error);
