@@ -6,7 +6,7 @@ const multer = require('multer');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.get('/', authenticateToken, isAdmin, userController.getAllUsers);
+router.get('/', authenticateToken, userController.getAllUsers);
 router.get('/profile', authenticateToken, userController.getProfile);
 router.put('/profile', authenticateToken, upload.single('avatar'), userController.updateProfile);
 router.delete('/:id', authenticateToken, isAdmin, userController.deleteUser);
