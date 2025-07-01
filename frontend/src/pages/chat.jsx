@@ -58,6 +58,11 @@ const Chat = () => {
         console.log(`Socket.IO connected for ${auth.username}`);
       });
 
+      newSocket.on('connect_error', (error) => {
+        console.error('Socket.IO connect error:', error.message);
+        toast.error('Kết nối Socket.IO thất bại');
+      });
+
       newSocket.on('onlineUsers', (users) => {
         console.log('Online users:', users);
         setOnlineUsers(users.filter((user) => user._id !== auth.userId));
@@ -76,15 +81,20 @@ const Chat = () => {
         console.log('Received message:', message);
         // Chỉ thêm tin nhắn nếu không phải từ người gửi và thuộc về cuộc trò chuyện hiện tại
         if (
-          message.sender._id !== auth.userId && // Bỏ qua tin nhắn từ chính người gửi
+          message.sender._id !== auth.userId &&
           (message.sender._id === selectedUser?._id || message.receiver._id === auth.userId)
         ) {
           setMessages((prev) => {
-            if (!prev.some((msg) => msg._id === message._id)) {
+            // Kiểm tra trùng _id chặt chẽ
+            if (!prev.some((msg) => msg._id.toString() === message._id.toString())) {
+              console.log('Adding new message from Socket.IO:', message._id);
               return [...prev, message];
             }
+            console.log('Message already exists (Socket.IO):', message._id);
             return prev;
           });
+        } else {
+          console.log('Message ignored (Socket.IO):', message._id, 'Sender:', message.sender._id, 'Auth:', auth.userId);
         }
       });
 
@@ -103,7 +113,14 @@ const Chat = () => {
       const fetchMessages = async () => {
         try {
           const res = await axios.get(`/message/${selectedUser._id}`);
-          setMessages(res.data.data);
+          const newMessages = res.data.data;
+          setMessages((prev) => {
+            // Lọc bỏ tin nhắn đã có dựa trên _id
+            const existingIds = new Set(prev.map((msg) => msg._id.toString()));
+            const filteredMessages = newMessages.filter((msg) => !existingIds.has(msg._id.toString()));
+            console.log('Fetched messages:', newMessages.length, 'New messages:', filteredMessages.length);
+            return [...prev, ...filteredMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+          });
         } catch (err) {
           console.error('Fetch messages error:', err.response?.data?.message || err.message);
           toast.error('Không thể tải lịch sử tin nhắn');
@@ -141,9 +158,11 @@ const Chat = () => {
       });
       const newMessage = res.data.data;
       setMessages((prev) => {
-        if (!prev.some((msg) => msg._id === newMessage._id)) {
+        if (!prev.some((msg) => msg._id.toString() === newMessage._id.toString())) {
+          console.log('Adding new message from API:', newMessage._id);
           return [...prev, newMessage];
         }
+        console.log('Message already exists (API):', newMessage._id);
         return prev;
       });
       socket.emit('sendMessage', {
