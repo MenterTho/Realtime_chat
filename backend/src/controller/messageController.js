@@ -6,6 +6,7 @@ const getMessages = async (req, res, next) => {
     const messages = await messageService.getMessages(req.user.id, req.params.userId);
     res.json({ message: 'Lấy danh sách tin nhắn thành công', data: messages });
   } catch (error) {
+    console.error('Error getting messages:', error.message);
     next(error);
   }
 };
@@ -24,19 +25,19 @@ const sendMessage = async (req, res, next) => {
         const receiver = await User.findById(receiverId);
         if (receiver && receiver.socketId) {
           io.to(receiver.socketId).emit('message', message);
-        }
-        const sender = await User.findById(req.user.id);
-        if (sender && sender.socketId) {
-          io.to(sender.socketId).emit('message', message);
+          console.log(`Message sent to receiver ${receiverId} socketId ${receiver.socketId}`);
+        } else {
+          console.log(`Receiver ${receiverId} not online or no socketId`);
         }
       } catch (socketError) {
         console.error('Socket.IO emit error:', socketError.message);
       }
     } else {
-      console.error('Socket.IO instance not found');
+      console.error('Socket.IO instance not found in messageController');
     }
     res.json({ message: 'Gửi tin nhắn thành công', data: message });
   } catch (error) {
+    console.error('Error sending message:', error.message);
     next(error);
   }
 };
