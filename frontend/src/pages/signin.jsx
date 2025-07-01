@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../lib/axios';
 import { useAuth } from '../hooks/userAuth';
@@ -10,20 +10,31 @@ function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { auth, login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (auth.userId) {
+      navigate('/');
+    }
+  }, [auth.userId, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       console.log('Sending login request to:', `${import.meta.env.VITE_API_URL}/auth/login`);
       const res = await axios.post('/auth/login', { username, password });
-      const { accessToken, userId, username: resUsername, avatar } = res.data.data;
-      login(accessToken, userId, resUsername, avatar);
+      console.log('Login response:', res.data);
+      const { accessToken, refreshToken, userId, id, _id, username: resUsername, avatar } = res.data.data;
+      const finalUserId = userId || id || _id;
+      if (!finalUserId) {
+        throw new Error('User ID not found in response');
+      }
+      login(accessToken, finalUserId, resUsername, avatar, refreshToken);
       toast.success('Đăng nhập thành công!');
       navigate('/');
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Đăng nhập thất bại. Kiểm tra backend CORS!';
+      const errorMsg = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!';
       console.error('Login error:', err.message, err.response?.data);
       setError(errorMsg);
       toast.error(errorMsg);
