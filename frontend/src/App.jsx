@@ -5,7 +5,7 @@ import { useAuth } from './hooks/userAuth';
 import Navbar from './components/ui-navbar/navbar';
 import Login from './pages/signin';
 import Register from './pages/register';
-import Chat from './pages/Chat';
+import Chat from './pages/chat';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
