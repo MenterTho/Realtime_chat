@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from './lib/axios';
-import { useAuth } from './hooks/userAuth';
+import { AuthContext } from './context/authContext';
 import Navbar from './components/ui-navbar/navbar';
 import Login from './pages/signin';
 import Register from './pages/register';
@@ -9,25 +9,30 @@ import Chat from './pages/chat';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
-  const { auth, login, logout, refreshToken } = useAuth();
+  const { auth, login, logout, refreshToken } = useContext(AuthContext);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const accessToken = sessionStorage.getItem('accessToken');
-        if (!accessToken) throw new Error('No access token');
+        const userId = sessionStorage.getItem('userId');
+        const username = sessionStorage.getItem('username');
+        const avatar = sessionStorage.getItem('avatar');
+        const refreshTokenStored = sessionStorage.getItem('refreshToken');
 
-        console.log('Token used for /user/profile:', accessToken);
-        console.log('Checking auth at:', `${import.meta.env.VITE_API_URL}/user/profile`);
+        if (!accessToken || !userId || !username) {
+          throw new Error('Missing auth data in sessionStorage');
+        }
+
+        // Kiểm tra token hợp lệ bằng cách gọi API profile
         const res = await axios.get('/user/profile');
-        console.log('Profile response:', res.data);
-        const { userId, id, _id, username, avatar } = res.data.data;
-        const finalUserId = userId || id || _id;
+        const { userId: resUserId, id, _id, username: resUsername, avatar: resAvatar } = res.data.data;
+        const finalUserId = resUserId || id || _id;
         if (!finalUserId) {
           throw new Error('User ID not found in profile response');
         }
-        login(accessToken, finalUserId, username, avatar, sessionStorage.getItem('refreshToken'));
+        login(accessToken, finalUserId, resUsername, resAvatar || avatar, refreshTokenStored);
       } catch (err) {
         if (err.response?.status === 403 || err.response?.data?.message.includes('token')) {
           const refreshed = await refreshToken();
@@ -43,6 +48,7 @@ function App() {
         setIsCheckingAuth(false);
       }
     };
+
     if (sessionStorage.getItem('accessToken')) {
       checkAuth();
     } else {

@@ -13,7 +13,9 @@ const Sidebar = ({ auth, allUsers, onlineUsers, selectedUser, setSelectedUser })
             />
             <div className="ml-3">
               <p className="font-semibold text-sm">{auth.username}</p>
-              <p className="text-xs text-gray-500">Senior Developer</p>
+              <p className="text-xs text-gray-500">
+                {auth.isOnline === true ? 'Online' : 'Offline'}
+              </p>
             </div>
           </>
         ) : (

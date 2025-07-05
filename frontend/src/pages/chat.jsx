@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import io from 'socket.io-client';
 import axios from '../lib/axios';
-import { useAuth } from '../hooks/userAuth';
+import { AuthContext } from '../context/authContext';
 import { SOCKET_URL } from '../constants';
 import toast from 'react-hot-toast';
 import Sidebar from '../components/ui-messages/sliderbar';
@@ -10,7 +10,7 @@ import ChatBody from '../components/ui-messages/messages';
 import ChatInput from '../components/ui-messages/inputChat';
 
 const Chat = () => {
-  const { auth } = useAuth();
+  const { auth, setAuth } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
@@ -57,9 +57,38 @@ const Chat = () => {
         }
       });
 
+      newSocket.on('updateProfile', (updatedUser) => {
+        console.log('Received profile update in Chat:', updatedUser);
+        setAllUsers((prev) =>
+          prev.map((user) =>
+            user.userId === updatedUser.userId
+              ? { ...user, username: updatedUser.username, avatar: updatedUser.avatar }
+              : user
+          )
+        );
+        if (selectedUser?._id === updatedUser.userId) {
+          setSelectedUser({
+            _id: updatedUser.userId,
+            username: updatedUser.username,
+            avatar: updatedUser.avatar,
+          });
+        }
+        if (updatedUser.userId === auth.userId) {
+          setAuth((prev) => ({
+            ...prev,
+            username: updatedUser.username,
+            avatar: updatedUser.avatar,
+            isOnline: true,
+          }));
+          sessionStorage.setItem('username', updatedUser.username);
+          sessionStorage.setItem('avatar', updatedUser.avatar);
+          sessionStorage.setItem('isOnline', 'true');
+        }
+      });
+
       return () => newSocket.disconnect();
     }
-  }, [auth, selectedUser]);
+  }, [auth, selectedUser, setAuth]);
 
   useEffect(() => {
     if (selectedUser && auth.accessToken) {

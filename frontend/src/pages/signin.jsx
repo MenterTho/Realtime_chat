@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../lib/axios';
-import { useAuth } from '../hooks/userAuth';
+import { useContext } from 'react';
+import { AuthContext } from '../context/authContext';
 import toast from 'react-hot-toast';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [setError] = useState('');
-  const { auth, login } = useAuth();
+  const [error, setError] = useState('');
+  const { auth, login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,10 +24,16 @@ function Login() {
       const res = await axios.post('/auth/login', { username, password });
       const { accessToken, refreshToken, userId, id, _id, username: resUsername, avatar } = res.data.data;
       const finalUserId = userId || id || _id;
-      if (!finalUserId) {
-        throw new Error('User ID not found in response');
+      if (!finalUserId || !resUsername) {
+        throw new Error('Invalid login response: Missing userId or username');
       }
-      login(accessToken, finalUserId, resUsername, avatar, refreshToken);
+      login(
+        accessToken,
+        finalUserId,
+        resUsername,
+        avatar || 'https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/08/13/356/avatar-vo-tri-meo-3.jpg',
+        refreshToken
+      );
       toast.success('Đăng nhập thành công!');
       navigate('/');
     } catch (err) {
@@ -46,7 +53,7 @@ function Login() {
 
       <div className="mx-auto max-w-lg px-6 lg:px-8 py-20">
         <img
-          src="../../public/icon/communication.png"
+          src="/icon/communication.png"
           alt="Messenger logo"
           className="mx-auto lg:mb-11 mb-8 object-cover w-24 h-auto"
         />
@@ -76,6 +83,10 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full h-12 text-gray-900 placeholder:text-gray-400 text-lg font-normal leading-7 rounded-full border-gray-300 border shadow-sm focus:outline-none px-4 mb-1"
             />
+
+            {error && (
+              <p className="text-red-500 text-sm mb-6">{error}</p>
+            )}
 
             <div className="flex justify-end mb-6">
               <span className="text-indigo-600 text-base font-normal leading-6 cursor-pointer">
