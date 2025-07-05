@@ -1,4 +1,3 @@
-// Chat.jsx (Page chính)
 import React, { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 import axios from '../lib/axios';

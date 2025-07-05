@@ -2,14 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../lib/axios';
 import { useAuth } from '../hooks/userAuth';
-import Input from '../components/ui-btn/inputBtn';
-import Button from '../components/ui-btn/button';
 import toast from 'react-hot-toast';
 
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [setError] = useState('');
   const { auth, login } = useAuth();
   const navigate = useNavigate();
 
@@ -22,9 +20,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      console.log('Sending login request to:', `${import.meta.env.VITE_API_URL}/auth/login`);
       const res = await axios.post('/auth/login', { username, password });
-      console.log('Login response:', res.data);
       const { accessToken, refreshToken, userId, id, _id, username: resUsername, avatar } = res.data.data;
       const finalUserId = userId || id || _id;
       if (!finalUserId) {
@@ -35,31 +31,76 @@ function Login() {
       navigate('/');
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại!';
-      console.error('Login error:', err.message, err.response?.data);
       setError(errorMsg);
       toast.error(errorMsg);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-4 text-center">Đăng nhập</h2>
-        <form onSubmit={handleLogin}>
-          <Input
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <Button type="submit">Đăng nhập</Button>
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </form>
+    <div className="relative min-h-screen w-full overflow-hidden font-inter">
+      <img
+        src="https://pagedone.io/asset/uploads/1702362010.png"
+        alt="gradient background image"
+        className="fixed inset-0 w-full h-full object-cover z-[-1]"
+      />
+
+      <div className="mx-auto max-w-lg px-6 lg:px-8 py-20">
+        <img
+          src="../../public/icon/communication.png"
+          alt="Messenger logo"
+          className="mx-auto lg:mb-11 mb-8 object-cover w-24 h-auto"
+        />
+
+        <div className="rounded-2xl bg-white shadow-xl">
+          <form onSubmit={handleLogin} className="lg:p-11 p-7 mx-auto">
+            <div className="mb-11">
+              <h1 className="text-gray-900 text-center font-manrope text-3xl font-bold leading-10 mb-2">
+                Welcome Back
+              </h1>
+              <p className="text-gray-500 text-center text-base font-medium leading-6">
+                Let’s get started with your 30 days free trial
+              </p>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full h-12 text-gray-900 placeholder:text-gray-400 text-lg font-normal leading-7 rounded-full border-gray-300 border shadow-sm focus:outline-none px-4 mb-6"
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-12 text-gray-900 placeholder:text-gray-400 text-lg font-normal leading-7 rounded-full border-gray-300 border shadow-sm focus:outline-none px-4 mb-1"
+            />
+
+            <div className="flex justify-end mb-6">
+              <span className="text-indigo-600 text-base font-normal leading-6 cursor-pointer">
+                Forgot Password?
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full h-12 text-white text-center text-base font-semibold leading-6 rounded-full hover:bg-indigo-800 transition-all duration-700 bg-indigo-600 shadow-sm mb-11"
+            >
+              Login
+            </button>
+
+            <div className="flex justify-center text-gray-900 text-base font-medium leading-6">
+              Don’t have an account?
+              <span
+                className="text-indigo-600 font-semibold pl-2 cursor-pointer"
+                onClick={() => navigate('/register')}
+              >
+                Sign Up
+              </span>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
