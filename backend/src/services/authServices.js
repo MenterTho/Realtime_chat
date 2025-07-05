@@ -21,11 +21,17 @@ const register = async (username, password) => {
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
 
-  return { message: 'User registered', accessToken, refreshToken };
+  return {
+    accessToken,
+    refreshToken,
+    userId: user._id.toString(),
+    username: user.username,
+    avatar: user.avatar || 'https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/08/13/356/avatar-vo-tri-meo-3.jpg',
+  };
 };
 
 const login = async (username, password) => {
-  const user = await User.findOne({ username });
+  const user = await User.findOne({ username }).select('+password');
   if (!user) {
     throw new Error('Invalid credentials');
   }
@@ -42,7 +48,13 @@ const login = async (username, password) => {
     { upsert: true }
   );
 
-  return { message: 'User login', accessToken, refreshToken, userId: user._id};
+  return {
+    accessToken,
+    refreshToken,
+    userId: user._id.toString(),
+    username: user.username,
+    avatar: user.avatar || 'https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/08/13/356/avatar-vo-tri-meo-3.jpg',
+  };
 };
 
 const refreshToken = async (refreshToken) => {
@@ -63,7 +75,13 @@ const refreshToken = async (refreshToken) => {
       { refreshToken: newRefreshToken, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
     );
 
-    return { accessToken, refreshToken: newRefreshToken };
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+      userId: user._id.toString(),
+      username: user.username,
+      avatar: user.avatar || 'https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/08/13/356/avatar-vo-tri-meo-3.jpg',
+    };
   } catch (error) {
     throw new Error('Invalid refresh token');
   }

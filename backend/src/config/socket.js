@@ -1,6 +1,7 @@
 const socketIo = require('socket.io');
 const { socketAuthMiddleware } = require('../middleware/authMiddleware');
 const User = require('../model/userModel');
+const userService = require('../services/userServices');
 
 const initializeSocket = (server) => {
   const io = socketIo(server, {
@@ -41,8 +42,44 @@ const initializeSocket = (server) => {
       // Emit userStatus
       io.emit('userStatus', { userId: socket.user.id, isOnline: true });
 
+      // Xử lý cập nhật hồ sơ
+      socket.on('updateProfile', async ({ userId, username, avatar }) => {
+        try {
+          // Kiểm tra quyền
+          if (userId !== socket.user.id) {
+            socket.emit('error', 'Không có quyền cập nhật hồ sơ của người khác');
+            return;
+          }
+
+          // Cập nhật thông tin người dùng
+          const user = await userService.getProfile(userId);
+          if (!user) {
+            socket.emit('error', 'Người dùng không tồn tại');
+            return;
+          }
+
+          // Chỉ cập nhật các trường được gửi
+          const updates = {};
+          if (username) updates.username = username;
+          if (avatar) updates.avatar = avatar;
+
+          const updatedUser = await userService.updateProfile(userId, updates, null);
+          
+          // Thông báo cập nhật hồ sơ đến tất cả client
+          io.emit('updateProfile', {
+            userId: updatedUser._id,
+            username: updatedUser.username,
+            avatar: updatedUser.avatar,
+          });
+          console.log(`Profile updated for user ${userId}: ${updatedUser.username}, ${updatedUser.avatar}`);
+        } catch (error) {
+          console.error('Update profile error:', error.message);
+          socket.emit('error', `Cập nhật hồ sơ thất bại: ${error.message}`);
+        }
+      });
+
       socket.on('sendMessage', async ({ receiverId, content, fileUrl, fileName }) => {
-        // Không xử lý gửi tin nhắn ở đây nữa, đã chuyển sang messageController.js
+        // Logic gửi tin nhắn đã được chuyển sang messageController.js
         console.log(`Received sendMessage event from ${socket.user.id} to ${receiverId}, content: ${content}`);
       });
 
