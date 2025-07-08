@@ -26,7 +26,7 @@ const register = async (username, password) => {
     refreshToken,
     userId: user._id.toString(),
     username: user.username,
-    avatar: user.avatar || 'https://cdn.kona-blue.com/upload/kona-blue_com/post/images/2024/08/13/356/avatar-vo-tri-meo-3.jpg',
+    avatar: user.avatar ,
   };
 };
 
