@@ -6,7 +6,7 @@ const userService = require('../services/userServices');
 const initializeSocket = (server) => {
   const io = socketIo(server, {
     cors: { 
-      origin: ['http://localhost:5173','https://realtime-chat-oo5w.onrender.com'], 
+      origin: ['http://localhost:5173','http://localhost', 'http://frontend','https://realtime-chat-oo5w.onrender.com'], 
       methods: ['GET', 'POST'],
       credentials: true 
     },

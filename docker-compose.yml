@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb+srv://kaosks123:UNi8cannfVJgivcz@chat.8gsh3hr.mongodb.net/?retryWrites=true&w=majority&appName=chat
+      - JWT_SECRET=pPmT1ac1DY4D0dvUP2tMknm0iAaFpQdm
+      - JWT_REFRESH_SECRET=tqupinfMle95tmDIOsD9nGrthuKpVQcT
+      - CLOUDINARY_CLOUD_NAME=dwvpcpd12
+      - CLOUDINARY_API_KEY=457775649371614
+      - CLOUDINARY_API_SECRET=wepqtv-6X8nsy2gjKGq_jbkMDFc
+    ports:
+      - "3001:3001"
+    networks:
+      - chat-network
+    depends_on:
+      - mongo # Nếu dùng MongoDB container local
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - VITE_API_URL=http://backend:3001/api/v1 
+      - VITE_SOCKET_URL=http://backend:3001
+    ports:
+      - "80:80"
+    networks:
+      - chat-network
+    depends_on:
+      - backend
+
+  # Nếu muốn chạy MongoDB local thay vì Atlas
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - chat-network
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
